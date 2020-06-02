@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import styled from "styled-components";
+import Switch from "react-switch";
 
 type DrumpadsInnerText = "Q" | "W" | "E" | "A" | "S" | "D" | "Z" | "X" | "C";
 
@@ -10,7 +11,7 @@ type Drumpad = {
   url: string;
 };
 
-const drumpads1: Drumpad[] = [
+const heaterKit: Drumpad[] = [
   {
     keyTrigger: "Q",
     label: "Heater-1",
@@ -58,7 +59,7 @@ const drumpads1: Drumpad[] = [
   },
 ];
 
-const drumpads2: Drumpad[] = [
+const smoothPianoKit: Drumpad[] = [
   {
     keyTrigger: "Q",
     label: "Chord-1",
@@ -106,18 +107,95 @@ const drumpads2: Drumpad[] = [
   },
 ];
 
-function App() {
-  const [bank, setBank] = useState<1 | 2>(1);
-  const [drumPlaying, setDrumPlaying] = useState<Drumpad | null>(null);
-  const [powerOn, setPowerOn] = useState<boolean>(true);
+const DrumMachine = styled.div`
+  margin: auto;
+  display: flex;
+  padding: 1rem;
+  // background: linear-gradient(
+  //   48deg,
+  //   rgba(197, 215, 231, 1) 46%,
+  //   rgba(235, 242, 249, 1) 68%,
+  //   rgba(197, 215, 231, 1) 90%
+  // );
+  background: black;
+`;
 
-  const drumpads = bank === 1 ? drumpads1 : drumpads2;
+const DrumpadContainer = styled.div`
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+`;
+
+const Drumpad = styled.button`
+  padding: 1rem 1.5rem;
+  box-shadow: 2px 2px 3px 2px rgba(0, 0, 0, 0.75);
+  border: none;
+  background: linear-gradient(
+    48deg,
+    rgba(86, 128, 164, 1) 46%,
+    rgba(116, 151, 181, 1) 68%,
+    rgba(86, 128, 164, 1) 90%
+  );
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-radius: 0.3rem;
+`;
+
+const Display = styled.div`
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin: auto;
+  box-sizing: border-box;
+  height: 2rem;
+  width: 9rem;
+  text-align: center;
+  padding: 0.5rem;
+  background: linear-gradient(
+    48deg,
+    rgba(86, 128, 164, 1) 46%,
+    rgba(116, 151, 181, 1) 68%,
+    rgba(86, 128, 164, 1) 90%
+  );
+  border-radius: 0.2rem;
+`;
+
+const Details = styled.div`
+  width: 10rem;
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 1rem;
+`;
+
+const SwitchContainer = styled.label`
+  width: 8rem;
+  text-align: center;
+  margin: auto;
+  padding: 1rem 0;
+`;
+
+const Label = styled.span`
+  display: block;
+  font-weight: bold;
+  color: white;
+  padding-bottom: 0.4rem;
+`;
+
+function App() {
+  const [bank, setBank] = useState<"Heater Kit" | "Smooth Piano Kit">(
+    "Heater Kit"
+  );
+  const [powerOn, setPowerOn] = useState<boolean>(true);
+  const [display, setDisplay] = useState<string>("");
+
+  const drumpads = bank === "Heater Kit" ? heaterKit : smoothPianoKit;
 
   const play = (drumpad: Drumpad) => {
     const audio = new Audio(drumpad.url);
     if (powerOn) {
       audio.play();
-      setDrumPlaying(drumpad);
+      setDisplay(drumpad.label);
     }
   };
 
@@ -135,39 +213,64 @@ function App() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [bank]);
 
   useEffect(() => {
     if (!powerOn) {
-      setDrumPlaying(null);
+      setDisplay("");
     }
   }, [powerOn]);
 
   return (
-    <div className="App">
-      <div className="drum-machine">
-        <div>
-          {drumpads.map((drumpad) => (
-            <button
-              className="drumpad"
-              key={drumpad.label}
-              onClick={(e) => {
-                play(drumpad);
-              }}
-            >
-              {drumpad.label}
-            </button>
-          ))}
-        </div>
-        <div className="display">{powerOn ? drumPlaying?.label : null}</div>
-        <button onClick={() => setPowerOn((powerOn) => !powerOn)}>
-          {powerOn ? "ON" : "OFF"}
-        </button>
-        <button onClick={(e) => setBank((bank) => (bank === 1 ? 2 : 1))}>
-          Bank: {bank}
-        </button>
-      </div>
-    </div>
+    <DrumMachine>
+      <DrumpadContainer>
+        {drumpads.map((drumpad) => (
+          <Drumpad
+            key={drumpad.label}
+            onClick={(e) => {
+              play(drumpad);
+            }}
+          >
+            {drumpad.keyTrigger}
+          </Drumpad>
+        ))}
+      </DrumpadContainer>
+      <Details>
+        <SwitchContainer>
+          <Label>Power</Label>
+          <Switch
+            onChange={() => setPowerOn((powerOn) => !powerOn)}
+            checked={powerOn}
+            offColor="#5680A4"
+            onColor="#5680A4"
+            offHandleColor="##5680A4"
+            onHandleColor="#000"
+          />
+        </SwitchContainer>
+
+        <Display>{display}</Display>
+
+        <SwitchContainer>
+          <Label>Bank</Label>
+          <Switch
+            disabled={!powerOn}
+            onChange={(e) => {
+              const newBank =
+                bank === "Heater Kit" ? "Smooth Piano Kit" : "Heater Kit";
+              setBank(newBank);
+              setDisplay(newBank);
+            }}
+            checked={bank === "Heater Kit"}
+            checkedIcon={false}
+            uncheckedIcon={false}
+            offColor="#5680A4"
+            onColor="#5680A4"
+            offHandleColor="#000"
+            onHandleColor="#000"
+          />
+        </SwitchContainer>
+      </Details>
+    </DrumMachine>
   );
 }
 
